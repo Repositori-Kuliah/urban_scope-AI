@@ -1,0 +1,12 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+urbanscope.db
+venv
+env
+.venv
+*.sqlite3
+*.log
+node_modules
+dist

@@ -1,0 +1,7 @@
+{
+  "name": "UrbanScope AI",
+  "description": "Smart Urban Analysis Dashboard with AI Integration",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
