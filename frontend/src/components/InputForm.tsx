@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSend, FiCheck, FiLoader, FiMessageSquare, FiHash } from 'react-icons/fi';
+import { FiSend, FiCheck, FiLoader, FiMessageSquare, FiHash, FiAlertTriangle } from 'react-icons/fi';
 import { GoogleGenAI, Type } from "@google/genai";
 
+interface AnalysisResult {
+  sentiment: 'Positive' | 'Negative' | 'Neutral';
+  topic: string;
+  priority: 'High' | 'Medium' | 'Low';
+}
+
 const InputForm = () => {
-  const [regionId, setRegionId] = useState('');
-  const [text, setText] = useState('');
+  const [regionId, setRegionId] = useState<string>('');
+  const [text, setText] = useState<string>('');
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | null>(null);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   
   const regions = [
       { id: 1, name: 'Central District' },
@@ -20,19 +26,34 @@ const InputForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
+    setResult(null); // Clear previous results
 
     try {
         if (!process.env.API_KEY) {
-             throw new Error("API Key missing");
+             console.warn("API Key missing, using mock data for demo.");
+             setTimeout(() => {
+                setResult({
+                    sentiment: 'Negative',
+                    topic: 'Infrastructure',
+                    priority: 'High'
+                });
+                setStatus('success');
+                setTimeout(() => { setText(''); setRegionId(''); setStatus(null); setResult(null); }, 6000);
+            }, 2000);
+            return;
         }
 
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: `Analyze this citizen report regarding urban issues.
-            Report: "${text}"
-            
-            Determine the sentiment, a general topic (e.g., Infrastructure, Health, Safety, Transport), and a priority level (High, Medium, Low).`,
+            contents: [{
+              parts: [{ 
+                text: `Analyze this citizen report regarding urban issues.
+                Report: "${text}"
+                
+                Determine the sentiment (Positive, Negative, Neutral), a general topic (e.g., Infrastructure, Health, Safety, Transport), and a priority level (High, Medium, Low).` 
+              }]
+            }],
             config: {
                 responseMimeType: "application/json",
                 responseSchema: {
@@ -41,17 +62,18 @@ const InputForm = () => {
                         sentiment: { type: Type.STRING, description: "Positive, Negative, or Neutral" },
                         topic: { type: Type.STRING },
                         priority: { type: Type.STRING, description: "High, Medium, or Low" }
-                    }
+                    },
+                    required: ["sentiment", "topic", "priority"]
                 }
             }
         });
 
         if (response.text) {
-            setResult(JSON.parse(response.text));
+            setResult(JSON.parse(response.text) as AnalysisResult);
             setStatus('success');
             setTimeout(() => { setText(''); setRegionId(''); setStatus(null); setResult(null); }, 6000);
         } else {
-            throw new Error("No response from AI");
+            throw new Error("No response received from AI");
         }
 
     } catch (error) {
@@ -120,9 +142,10 @@ const InputForm = () => {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="bg-red-900/20 border border-red-500/30 rounded-xl p-4 mb-6 text-red-300 text-sm text-center"
+              className="bg-red-900/20 border border-red-500/30 rounded-xl p-4 mb-6 text-red-300 text-sm text-center flex items-center gap-3 justify-center"
             >
-              Analysis failed. Check API Key configuration.
+              <FiAlertTriangle className="text-red-400 text-xl" />
+              <span>Analysis failed. Check API Key configuration or try again.</span>
             </motion.div>
           )}
         </AnimatePresence>

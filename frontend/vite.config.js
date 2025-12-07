@@ -4,7 +4,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
-    plugins: [react()],
+    plugins: [
+      react({
+        // Add this to handle .ts and .tsx files
+        // This ensures the plugin processes TypeScript correctly
+        include: '**/*.{js,jsx,ts,tsx}',
+      }),
+    ],
     define: {
       // Polyfill process.env for the Google GenAI SDK usage in client
       'process.env.API_KEY': JSON.stringify(env.API_KEY || process.env.API_KEY)

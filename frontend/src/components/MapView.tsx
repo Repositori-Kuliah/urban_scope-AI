@@ -2,7 +2,17 @@ import React from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup, Tooltip } from 'react-leaflet';
 import { FiMapPin } from 'react-icons/fi';
 
-const MapView = ({ data }: { data: any[] }) => {
+interface MapLocationData {
+  region: string;
+  score: number;
+  priority: 'High' | 'Medium' | 'Low';
+  review_count: number;
+  facility_count: number;
+  action: string;
+  coords: [number, number];
+}
+
+const MapView = ({ data }: { data: MapLocationData[] }) => {
   const defaultCenter: [number, number] = [-6.2088, 106.8456]; // Jakarta coordinates
 
   const getColor = (score: number) => {
@@ -22,6 +32,7 @@ const MapView = ({ data }: { data: any[] }) => {
           center={defaultCenter} 
           zoom={11} 
           style={{ height: '100%', width: '100%' }}
+          attributionControl={false} // Hide default Leaflet attribution for custom placement
         >
           <TileLayer 
             url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
